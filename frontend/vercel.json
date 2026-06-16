@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://keystroke-backend-dbkf.onrender.com/api/$1"
+    }
+  ]
+}
