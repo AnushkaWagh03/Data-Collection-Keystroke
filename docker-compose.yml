@@ -1,0 +1,151 @@
+services:
+  # MongoDB Database
+  mongo:
+    image: mongo:6
+    container_name: keystroke-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-dev-local-only-change-this}
+      MONGO_INITDB_DATABASE: keystroke-research
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME:-keystroke_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-dev-local-only-change-this-app}
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - keystroke-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    profiles:
+      - local-db
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: keystroke-backend
+    restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    dns_opt:
+      - timeout:2
+      - attempts:3
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5000
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://${MONGO_APP_USERNAME:-keystroke_app}:${MONGO_APP_PASSWORD:-dev-local-only-change-this-app}@mongo:27017/${MONGO_INITDB_DATABASE:-keystroke-research}?authSource=${MONGO_INITDB_DATABASE:-keystroke-research}}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:-dev-local-only-change-this-secret}
+      STORE_TYPED_TEXT: ${STORE_TYPED_TEXT:-false}
+      REQUEST_BODY_LIMIT: ${REQUEST_BODY_LIMIT:-2mb}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      ADMIN_TOKEN_TTL_SECONDS: ${ADMIN_TOKEN_TTL_SECONDS:-3600}
+      MAX_KEYSTROKES_PER_SESSION: ${MAX_KEYSTROKES_PER_SESSION:-3000}
+      MAX_WINDOW_EVENTS_PER_SESSION: ${MAX_WINDOW_EVENTS_PER_SESSION:-500}
+      MAX_SUSPICIOUS_EVENTS_PER_SESSION: ${MAX_SUSPICIOUS_EVENTS_PER_SESSION:-500}
+      MAX_ERROR_BURSTS_PER_SESSION: ${MAX_ERROR_BURSTS_PER_SESSION:-1000}
+      MAX_SENTENCE_TEXT_LENGTH: ${MAX_SENTENCE_TEXT_LENGTH:-1000}
+      EXPORT_DEFAULT_PAGE_SIZE: ${EXPORT_DEFAULT_PAGE_SIZE:-500}
+      EXPORT_MAX_PAGE_SIZE: ${EXPORT_MAX_PAGE_SIZE:-2000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./backend/logs:/app/logs
+      - ./backend/exports:/app/exports
+    networks:
+      - keystroke-network
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend React Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5000}
+    container_name: keystroke-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    networks:
+      - keystroke-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB Admin Interface (Optional - for development)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: keystroke-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-dev-local-only-change-this}
+      ME_CONFIG_MONGODB_URL: mongodb://admin:${MONGO_ROOT_PASSWORD:-dev-local-only-change-this}@mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-devadmin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-dev-local-only-change-this}
+    ports:
+      - "127.0.0.1:8081:8081"
+    networks:
+      - keystroke-network
+    depends_on:
+      - mongo
+    profiles:
+      - dev  # Only run in development
+
+  # Nginx Reverse Proxy (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: keystroke-nginx
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+    networks:
+      - keystroke-network
+    depends_on:
+      - frontend
+      - backend
+    profiles:
+      - production  # Only run in production
+
+networks:
+  keystroke-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
+  mongo-config:
+    driver: local
+  nginx-cache:
+    driver: local

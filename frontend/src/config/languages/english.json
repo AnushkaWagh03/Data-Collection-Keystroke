@@ -1,0 +1,123 @@
+{
+  "language": "english",
+  "language_name": "English",
+  "script": "Latin",
+  "font_family": "Inter, system-ui, sans-serif",
+  "keyboard_type": ["QWERTY", "DVORAK", "COLEMAK"],
+  "script_direction": "ltr",
+  
+  "test_sentence_count": 5,
+  "prompt_visibility_modes": [
+    "visible",
+    "faded",
+    "blurred",
+    "hidden",
+    "timed_reveal"
+  ],
+  "default_visibility_mode": "visible",
+  
+  "interface_text": {
+    "title": "English Typing Test",
+    "subtitle": "Keystroke Dynamics Research Platform",
+    "instructions": "Type the sentence shown below carefully. This is an optional test after completing Hindi.",
+    "start_typing": "Start Typing",
+    "next_sentence": "Next Sentence",
+    "complete": "Complete",
+    "reveal_prompt": "Reveal Prompt (3s)",
+    "consent_text": "I agree to participate in this research and understand that my keystroke data will be collected.",
+    "survey_title": "Participant Survey"
+  },
+  
+  "typing_rules": {
+    "allow_backspace": true,
+    "allow_copy_paste": false,
+    "allow_autocorrect": false,
+    "require_exact_match": false,
+    "min_accuracy": 0.0
+  },
+  
+  "allowed_characters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?'-",
+  
+  "dataset_sentences": [
+    "The quick brown fox jumps over the lazy dog.",
+    "Technology has transformed our daily lives.",
+    "Education is the foundation of progress.",
+    "Reading books expands our imagination.",
+    "Music connects people across cultures.",
+    "Exercise is essential for good health.",
+    "Nature provides endless inspiration.",
+    "Kindness costs nothing but means everything.",
+    "Time is our most valuable resource.",
+    "Creativity drives innovation forward.",
+    "Communication builds strong relationships.",
+    "Learning never stops throughout life.",
+    "Challenges help us grow stronger.",
+    "Dreams inspire us to achieve more.",
+    "Teamwork makes difficult tasks easier.",
+    "Honesty is the best policy always.",
+    "Patience leads to better outcomes.",
+    "Science helps us understand the world.",
+    "Art expresses human emotions beautifully.",
+    "Friendship enriches our lives immeasurably.",
+    "Travel broadens our perspectives significantly.",
+    "Laughter is the best medicine available.",
+    "Courage helps overcome our fears.",
+    "Gratitude improves our mental wellbeing.",
+    "Innovation shapes our future possibilities.",
+    "Respect is fundamental to society.",
+    "Knowledge empowers us to succeed.",
+    "Practice makes perfect over time.",
+    "Balance is key to happiness.",
+    "Hope sustains us through difficulties.",
+    "Diversity strengthens our communities greatly.",
+    "Curiosity drives scientific discovery forward.",
+    "Compassion makes the world better.",
+    "Focus improves our productivity significantly.",
+    "Wisdom comes from life experience.",
+    "Adventure adds excitement to life.",
+    "Cooperation achieves common goals faster.",
+    "Determination overcomes many obstacles efficiently.",
+    "Flexibility helps us adapt quickly.",
+    "Generosity creates positive ripple effects.",
+    "Imagination unlocks unlimited potential always.",
+    "Justice ensures fairness for everyone.",
+    "Leadership inspires others to excel.",
+    "Mindfulness reduces stress and anxiety.",
+    "Nutrition affects our overall health.",
+    "Optimism attracts positive outcomes naturally.",
+    "Perseverance leads to eventual success.",
+    "Quality matters more than quantity.",
+    "Resilience helps us bounce back.",
+    "Sustainability protects future generations properly."
+  ],
+  
+  "visibility_config": {
+    "visible": {
+      "opacity": 1.0,
+      "blur": 0,
+      "user_select": "none",
+      "pointer_events": "none"
+    },
+    "faded": {
+      "opacity": 0.25,
+      "blur": 0,
+      "user_select": "none",
+      "pointer_events": "none"
+    },
+    "blurred": {
+      "opacity": 1.0,
+      "blur": 8,
+      "user_select": "none",
+      "pointer_events": "none"
+    },
+    "hidden": {
+      "display": "none"
+    },
+    "timed_reveal": {
+      "default_hidden": true,
+      "reveal_duration_ms": 3000,
+      "max_reveals": 5,
+      "cooldown_ms": 2000
+    }
+  }
+}

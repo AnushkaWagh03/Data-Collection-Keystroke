@@ -1,0 +1,86 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    dns_opt:
+      - timeout:2
+      - attempts:3
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      MONGODB_URI: ${MONGODB_URI:?MONGODB_URI is required}
+      FRONTEND_URL: https://${DOMAIN}
+      JWT_SECRET: ${JWT_SECRET}
+      STORE_TYPED_TEXT: ${STORE_TYPED_TEXT}
+      REQUEST_BODY_LIMIT: ${REQUEST_BODY_LIMIT}
+      ADMIN_PANEL_PASSWORD: ${ADMIN_PANEL_PASSWORD}
+      ADMIN_AUTH_SECRET: ${ADMIN_AUTH_SECRET}
+      ADMIN_TOKEN_TTL_SECONDS: ${ADMIN_TOKEN_TTL_SECONDS}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS}
+      ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS: ${ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS}
+      ADMIN_LOGIN_RATE_LIMIT_MAX: ${ADMIN_LOGIN_RATE_LIMIT_MAX}
+      MAX_KEYSTROKES_PER_SESSION: ${MAX_KEYSTROKES_PER_SESSION}
+      MAX_WINDOW_EVENTS_PER_SESSION: ${MAX_WINDOW_EVENTS_PER_SESSION}
+      MAX_SUSPICIOUS_EVENTS_PER_SESSION: ${MAX_SUSPICIOUS_EVENTS_PER_SESSION}
+      MAX_ERROR_BURSTS_PER_SESSION: ${MAX_ERROR_BURSTS_PER_SESSION}
+      MAX_SENTENCE_TEXT_LENGTH: ${MAX_SENTENCE_TEXT_LENGTH}
+      EXPORT_DEFAULT_PAGE_SIZE: ${EXPORT_DEFAULT_PAGE_SIZE}
+      EXPORT_MAX_PAGE_SIZE: ${EXPORT_MAX_PAGE_SIZE}
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5000/api/health > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - edge
+      - app
+    env_file:
+      - ./.env.production
+networks:
+  edge:
+    driver: bridge
+  app:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  caddy-data:
+  caddy-config:
